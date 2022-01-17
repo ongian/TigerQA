@@ -101,7 +101,10 @@ table td span.out-of-stock, table td span.cnet, table td span.less-4, .not-match
 .qa-results table {
   border-collapse: collapse;
 }
-.qa-results table tbody tr:nth-of-type(1) {
+.qa-results table.featured-skus {
+  margin: 0 0 10px;
+}
+.qa-results table.product-container-skus tbody tr:nth-of-type(1) {
   position: sticky;
   width: 100%;
   margin: auto;
