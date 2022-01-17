@@ -48,7 +48,14 @@ const QAPage = async(campaignID) => {
             EDPs.push(skuData)
             document.querySelector('.progress').innerHTML = `<span>Checking ${i} / ${eachProduct.length}</span>`;
         }
-        console.log(EDPs)
+
+        if(featuredProductEDP.length > 0){
+            for(i = 0; i < featuredProductEDP.length; i++){
+                const PDPData = await QASku(featuredProductEDP[i]);
+                productArray.push(PDPData)
+            }
+        }
+       
         if(EDPs.length > 0){
             tableContent = EDPs.map(skuArr => `<tr>
                 <td> ${skuArr.PDPData.category}</td>
@@ -60,7 +67,7 @@ const QAPage = async(campaignID) => {
                 <td><span class=${skuArr.PDPData.shipping === 'FREE' ? 'free' : ''}>${skuArr.PDPData.shipping}</span></td>
                 <td><span class=${skuArr.PDPData.rating === 'No Reviews' ? 'no-review' : (skuArr.PDPData.rating < 4 ? 'less-4' : 'good')}>${skuArr.PDPData.rating}</span></td>
             </tr>`).join('');
-            document.querySelector('.qa-results').innerHTML = `<table cellpadding="0" cellspacing="0" width="100%">
+            document.querySelector('.qa-results').innerHTML = `<table class="product-container-skus" cellpadding="0" cellspacing="0" width="100%">
             <tr>
             <th>Category</th>
             <th>SKU #</th>
@@ -76,7 +83,29 @@ const QAPage = async(campaignID) => {
             document.querySelector('.qa-results').innerHTML = `<h3>Unable to retreive data from https://www.tigerdirect.com/applications/campaigns/deals.asp?campaignid=${campaignID}</h3>`
         }
         
-        
+        if(productArray.length > 0){
+            const tableContent = productArray.map(skuArr => `<tr>
+                <td> ${skuArr.category}</td>
+                <td><a href="https://www.tigerdirect.com/applications/SearchTools/item-details.asp?EdpNo=${skuArr.edp}" target="_blank">${skuArr.sku}</a></td>
+                <td class="price"><div class="pdp-price">${skuArr.LPInfo && '<del>'+skuArr.LPInfo+'</del>'} ${skuArr.priceInfo == 'No Price' ? 'No Price' : skuArr.priceInfo}</div></td>
+                <td><span class=${skuArr.stock === 'Out of stock' ? 'out-of-stock' : 'in-stock'}>${skuArr.stock}</span></td>
+                <td>${skuArr.condition}</td>
+                <td><span class=${skuArr.skuType === 'YES' ? 'cnet' : ''}>${skuArr.skuType}</span></td>
+                <td><span class=${skuArr.shipping === 'FREE' ? 'free' : ''}>${skuArr.shipping}</span></td>
+                <td><span class=${skuArr.rating === 'No Reviews' ? 'no-review' : (skuArr.rating < 4 ? 'less-4' : 'good')}>${skuArr.rating}</span></td>
+            </tr>`).join('');
+                document.querySelector('.qa-results').insertAdjacentHTML('afterbegin', `<table class="featured-skus" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                <th>Category</th>
+                <th>SKU #</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Condition</th>
+                <th>CNET</th>
+                <th>Shipping Fee</th>
+                <th>Rating</th>
+            </tr> ${tableContent} </table>`);
+        }
     } catch(err){
         console.log(err)
     }
@@ -136,7 +165,7 @@ const QAPCGaming = async(campaignID) => {
             </tr>`).join('') }
             `).join('');
             
-        document.querySelector('.qa-results').innerHTML = `<table cellpadding="0" cellspacing="0" width="100%">
+        document.querySelector('.qa-results').innerHTML = `<table class="product-container-skus" cellpadding="0" cellspacing="0" width="100%">
         <tr>
             <th>Category</th>
             <th>SKU #</th>
