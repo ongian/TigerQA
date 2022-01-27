@@ -26,8 +26,6 @@ const QAPage = async(campaignID) => {
             progress = `${i} / ${eachProduct.length}`;
 
             const PDPData = await QASku(eachProduct[i].dataset.edpno);
-
-            
             //Check if has list Price
             const CPMapPrice = eachProduct[i].querySelector('.salePrice .mapprice');
             const CPMapPriceB = eachProduct[i].querySelector('.salePrice .mappriceb');
@@ -133,11 +131,11 @@ const QAPCGaming = async(campaignID) => {
             for(var ii = 0; ii < subFeaturedSku.length; ii++){
                 const subParams = new URLSearchParams(subFeaturedSku[ii].href.split('?')[1]);
                 const subFeaturedEDP = subParams.get('EdpNo');
-                subFeaturedSKUArr.push(await QASku(subFeaturedEDP))
+                subFeaturedSKUArr.push({sub: await QASku(subFeaturedEDP), shippingInfo: subFeaturedSku[ii].querySelector('.sku-callout').innerText.trim()})
             }
             featuredArr.push({
                 category: category,
-                edpno: await QASku(featuredSkuEdpno),
+                 edpno: {FeaturedSku: await QASku(featuredSkuEdpno), shipping: eachFeatured[i].querySelector('.callout').innerText.trim()},
                 sub: subFeaturedSKUArr
             });
         }
@@ -146,22 +144,22 @@ const QAPCGaming = async(campaignID) => {
                 <td colspan="7">${skuArr.category}</td>
             </tr>
             <tr>
-                <td><i class="fas fa-copy" onclick="${getSku.bind(this, skuArr.edpno.edp, skuArr.edpno.sku, skuArr.edpno.category)}"></i> ${skuArr.edpno.category}</td>
-                <td><a href="https://www.tigerdirect.com/applications/SearchTools/item-details.asp?EdpNo=${skuArr.edpno.edp}" target="_blank">${skuArr.edpno.sku}</a></td>
-                <td><span class=${skuArr.edpno.stock === 'Out of stock' ? 'out-of-stock' : 'in-stock'}>${skuArr.edpno.stock}</span></td>
-                <td>${skuArr.edpno.condition}</td>
-                <td><span class=${skuArr.edpno.skuType === 'YES' ? 'cnet' : ''}>${skuArr.edpno.skuType}</span></td>
-                <td><span class=${skuArr.edpno.shipping === 'FREE' ? 'free' : ''}>${skuArr.edpno.shipping}</span></td>
-                <td><span class=${skuArr.edpno.rating === 'No Reviews' ? 'no-review' : (skuArr.edpno.rating < 4 ? 'less-4' : 'good')}>${skuArr.edpno.rating}</span></td>
+                <td>${skuArr.edpno.FeaturedSku.category}</td>
+                <td><a href="https://www.tigerdirect.com/applications/SearchTools/item-details.asp?EdpNo=${skuArr.edpno.FeaturedSku.edp}" target="_blank">${skuArr.edpno.FeaturedSku.sku}</a></td>
+                <td><span class=${skuArr.edpno.FeaturedSku.stock === 'Out of stock' ? 'out-of-stock' : 'in-stock'}>${skuArr.edpno.FeaturedSku.stock}</span></td>
+                <td>${skuArr.edpno.FeaturedSku.condition}</td>
+                <td><span class=${skuArr.edpno.FeaturedSku.skuType === 'YES' ? 'cnet' : ''}>${skuArr.edpno.FeaturedSku.skuType}</span></td>
+                <td><span class=${skuArr.edpno.FeaturedSku.shipping === 'FREE' ? 'free' : ''}>${skuArr.edpno.shipping === 'FREE SHIPPING' ? 'FREE SHIPPING' : 'NOT FREE'}${skuArr.edpno.FeaturedSku.shipping}</span></td>
+                <td><span class=${skuArr.edpno.FeaturedSku.rating === 'No Reviews' ? 'no-review' : (skuArr.edpno.rating < 4 ? 'less-4' : 'good')}>${skuArr.edpno.FeaturedSku.rating}</span></td>
             </tr>
             ${skuArr.sub.map(subSKU => `<tr>
-                <td><i class="fas fa-copy" onclick="${getSku.bind(this, subSKU.edp, subSKU.sku, subSKU.category)}"></i> ${subSKU.category}</td>
-                <td><a href="https://www.tigerdirect.com/applications/SearchTools/item-details.asp?EdpNo=${subSKU.edp}" target="_blank">${subSKU.sku}</a></td>
-                <td><span class=${subSKU.stock === 'Out of stock' ? 'out-of-stock' : 'in-stock'}>${subSKU.stock}</span></td>
-                <td>${subSKU.condition}</td>
-                <td><span class=${subSKU.skuType === 'YES' ? 'cnet' : ''}>${subSKU.skuType}</span></td>
-                <td><span class=${subSKU.shipping === 'FREE' ? 'free' : ''}>${subSKU.shipping}</span></td>
-                <td><span class=${subSKU.rating === 'No Reviews' ? 'no-review' : (subSKU.rating < 4 ? 'less-4' : 'good')}>${subSKU.rating}</span></td>
+                <td><i class="fas fa-copy" onclick="${getSku.bind(this, subSKU.sub.edp, subSKU.sub.sku, subSKU.sub.category)}"></i> ${subSKU.sub.category}</td>
+                <td><a href="https://www.tigerdirect.com/applications/SearchTools/item-details.asp?EdpNo=${subSKU.sub.edp}" target="_blank">${subSKU.sub.sku}</a></td>
+                <td><span class=${subSKU.sub.stock === 'Out of stock' ? 'out-of-stock' : 'in-stock'}>${subSKU.sub.stock}</span></td>
+                <td>${subSKU.sub.condition}</td>
+                <td><span class=${subSKU.sub.skuType === 'YES' ? 'cnet' : ''}>${subSKU.sub.skuType}</span></td>
+                <td><span class=${subSKU.sub.shipping === 'FREE' ? 'free' : ''}>${subSKU.shippingInfo === 'FREE SHIPPING' ? 'FREE SHIPPING' : 'NOT FREE'}${subSKU.sub.shipping}</span></td>
+                <td><span class=${subSKU.sub.rating === 'No Reviews' ? 'no-review' : (subSKU.sub.rating < 4 ? 'less-4' : 'good')}>${subSKU.sub.rating}</span></td>
             </tr>`).join('') }
             `).join('');
             
@@ -199,7 +197,8 @@ const QASku = async(edp) => {
         //Get List Price
         const pdpListPrice = parsedSku.querySelector('.pdp-info .list-price .sr-only');
         const listPrice = pdpListPrice ? Number(pdpListPrice.innerText.replace(/(cents|\s|,)/g, '').replace(/and/g, '.').slice(1)).toFixed(2) : '';
-        return {
+        const errorSKU = parsedSku.querySelector('.error-message.text-center');
+        return errorSKU ? 'Product Not Found' : {
             condition: parsedSku.querySelector('.pdp-info .pdp-sku > img') ? 'Refurb' : 'New',
             skuType: parsedSku.querySelectorAll('.pdp-img-carousel .pdp-img-magnify').length + parsedSku.querySelectorAll('#prodinfo .shortDesc .nomobile').length > 0 ? 'NO' : 'YES',
             stock: parsedSku.querySelectorAll('.pdp-info .outofStock').length ? 'Out of stock' : 'In stock',
