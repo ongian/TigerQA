@@ -131,11 +131,17 @@ const QAPCGaming = async(campaignID) => {
             for(var ii = 0; ii < subFeaturedSku.length; ii++){
                 const subParams = new URLSearchParams(subFeaturedSku[ii].href.split('?')[1]);
                 const subFeaturedEDP = subParams.get('EdpNo');
-                subFeaturedSKUArr.push({sub: await QASku(subFeaturedEDP), shippingInfo: subFeaturedSku[ii].querySelector('.sku-callout').innerText.trim()})
+                subFeaturedSKUArr.push({
+                    sub: await QASku(subFeaturedEDP), 
+                    shippingInfo: subFeaturedSku[ii].querySelector('.sku-callout').innerText.match(/FREE SHIPPING/) ? 'FREE SHIPPING' : 'NOT FREE'
+                });
             }
             featuredArr.push({
                 category: category,
-                 edpno: {FeaturedSku: await QASku(featuredSkuEdpno), shipping: eachFeatured[i].querySelector('.callout').innerText.trim()},
+                edpno: {
+                    FeaturedSku: await QASku(featuredSkuEdpno), 
+                    shipping: eachFeatured[i].querySelector('.callout').innerText.match(/FREE SHIPPING/) ? 'FREE SHIPPING' : 'NOT FREE'
+                },
                 sub: subFeaturedSKUArr
             });
         }
@@ -149,7 +155,7 @@ const QAPCGaming = async(campaignID) => {
                 <td><span class=${skuArr.edpno.FeaturedSku.stock === 'Out of stock' ? 'out-of-stock' : 'in-stock'}>${skuArr.edpno.FeaturedSku.stock}</span></td>
                 <td>${skuArr.edpno.FeaturedSku.condition}</td>
                 <td><span class=${skuArr.edpno.FeaturedSku.skuType === 'YES' ? 'cnet' : ''}>${skuArr.edpno.FeaturedSku.skuType}</span></td>
-                <td><span class=${skuArr.edpno.FeaturedSku.shipping === 'FREE' ? 'free' : ''}>${skuArr.edpno.shipping === 'FREE SHIPPING' ? 'FREE SHIPPING' : 'NOT FREE'}${skuArr.edpno.FeaturedSku.shipping}</span></td>
+                <td><span class=${skuArr.edpno.FeaturedSku.shipping !== skuArr.edpno.shipping ? "not-match" : ""}>${skuArr.edpno.shipping === 'FREE SHIPPING' ? 'FREE SHIPPING ' : 'NOT FREE'}  |  ${skuArr.edpno.FeaturedSku.shipping}</span></td>
                 <td><span class=${skuArr.edpno.FeaturedSku.rating === 'No Reviews' ? 'no-review' : (skuArr.edpno.rating < 4 ? 'less-4' : 'good')}>${skuArr.edpno.FeaturedSku.rating}</span></td>
             </tr>
             ${skuArr.sub.map(subSKU => `<tr>
@@ -158,7 +164,7 @@ const QAPCGaming = async(campaignID) => {
                 <td><span class=${subSKU.sub.stock === 'Out of stock' ? 'out-of-stock' : 'in-stock'}>${subSKU.sub.stock}</span></td>
                 <td>${subSKU.sub.condition}</td>
                 <td><span class=${subSKU.sub.skuType === 'YES' ? 'cnet' : ''}>${subSKU.sub.skuType}</span></td>
-                <td><span class=${subSKU.sub.shipping === 'FREE' ? 'free' : ''}>${subSKU.shippingInfo === 'FREE SHIPPING' ? 'FREE SHIPPING' : 'NOT FREE'}${subSKU.sub.shipping}</span></td>
+                <td><span class=${subSKU.sub.shipping !== subSKU.shippingInfo ? "not-match" : ""}>${subSKU.shippingInfo === 'FREE SHIPPING' ? 'FREE SHIPPING' : 'NOT FREE'}  |  ${subSKU.sub.shipping}</span></td>
                 <td><span class=${subSKU.sub.rating === 'No Reviews' ? 'no-review' : (subSKU.sub.rating < 4 ? 'less-4' : 'good')}>${subSKU.sub.rating}</span></td>
             </tr>`).join('') }
             `).join('');
@@ -173,7 +179,6 @@ const QAPCGaming = async(campaignID) => {
             <th>Shipping Fee</th>
             <th>Rating</th>
         </tr> ${tableContent} </table>`;
-        console.log(featuredArr)
     } catch(error) {
         console.log(error)
     }
@@ -206,7 +211,7 @@ const QASku = async(edp) => {
             category: parsedSku.querySelectorAll('.pdp .breadcrumb li')[parsedSku.querySelectorAll('.pdp .breadcrumb li').length - 2].innerText,
             edp: edp,
             rating: parsedSku.querySelector('.pdp-info .with-review .score') ? parsedSku.querySelector('.pdp-info .with-review .score').innerText : 'No Reviews',
-            shipping: parsedSku.querySelector('.pdp-info').innerText.match(/Free Shipping Today!/) ? 'Free Shipping' : 'Not Free',
+            shipping: parsedSku.querySelector('.pdp-info').innerText.match(/Free Shipping Today!/) ? 'FREE SHIPPING' : 'NOT FREE',
             priceInfo: finalPrice,
             LPInfo: listPrice
         }
