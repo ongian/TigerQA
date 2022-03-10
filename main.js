@@ -85,6 +85,7 @@ const QAPage = async(campaignID) => {
                 <td><span class=${skuArr.PDPData.skuType === 'YES' ? 'cnet' : ''}>${skuArr.PDPData.skuType}</span></td>
                 <td><span class=${skuArr.PDPData.shipping === 'FREE' ? 'free' : ''}>${skuArr.PDPData.shipping}</span></td>
                 <td><span class=${skuArr.PDPData.rating === 'No Reviews' ? 'no-review' : (skuArr.PDPData.rating < 4 ? 'less-4' : 'good')}>${skuArr.PDPData.rating}</span></td>
+                <td><span class=${skuArr.PDPData.withImg === 'NO' && 'cnet'}>${skuArr.PDPData.withImg}</span></td>
             </tr>`).join('');
             document.querySelector('.qa-results').innerHTML = `<table class="product-container-skus" cellpadding="0" cellspacing="0" width="100%">
             <tr>
@@ -96,6 +97,7 @@ const QAPage = async(campaignID) => {
             <th>CNET</th>
             <th>Shipping Fee</th>
             <th>Rating</th>
+            <th>With Image</th>
         </tr> ${tableContent} </table>`;
             document.querySelector('.progress').innerHTML = '';
         }
@@ -110,6 +112,7 @@ const QAPage = async(campaignID) => {
                 <td><span class=${skuArr.skuType === 'YES' ? 'cnet' : ''}>${skuArr.skuType}</span></td>
                 <td><span class=${skuArr.shipping === 'FREE' ? 'free' : ''}>${skuArr.shipping}</span></td>
                 <td><span class=${skuArr.rating === 'No Reviews' ? 'no-review' : (skuArr.rating < 4 ? 'less-4' : 'good')}>${skuArr.rating}</span></td>
+                <td><span class=${skuArr.withImg === 'NO' && 'cnet'}>${skuArr.withImg}</span></td>
             </tr>`).join('');
                 document.querySelector('.qa-results').insertAdjacentHTML('afterbegin', `<table class="featured-skus" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
@@ -121,6 +124,7 @@ const QAPage = async(campaignID) => {
                 <th>CNET</th>
                 <th>Shipping Fee</th>
                 <th>Rating</th>
+                <th>With Image</th>
             </tr> ${tableContent} </table>`);
             document.querySelector('.progress').innerHTML = '';
         }
@@ -134,6 +138,7 @@ const QAPage = async(campaignID) => {
                 <td><span class=${skuArr.skuType === 'YES' ? 'cnet' : ''}>${skuArr.skuType}</span></td>
                 <td><span class=${skuArr.shipping === 'FREE' ? 'free' : ''}>${skuArr.shipping}</span></td>
                 <td><span class=${skuArr.rating === 'No Reviews' ? 'no-review' : (skuArr.rating < 4 ? 'less-4' : 'good')}>${skuArr.rating}</span></td>
+                <td><span class=${skuArr.withImg === 'NO' && 'cnet'}>${skuArr.withImg}</span></td>    
             </tr>`).join('');
                 document.querySelector('.qa-results').insertAdjacentHTML('afterbegin', `<table class="featured-skus" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
@@ -145,6 +150,7 @@ const QAPage = async(campaignID) => {
                 <th>CNET</th>
                 <th>Shipping Fee</th>
                 <th>Rating</th>
+                <th>With Image</th>
             </tr> ${tableContent} </table>`);
         }
         document.querySelectorAll('.qa-results .loader').length > 0 && document.querySelector('.qa-results .loader').remove();
@@ -273,10 +279,14 @@ const QASku = async(edp) => {
         //Get Final Price
         const pdpFinalPrice = parsedSku.querySelector('.pdp-info .final-price .sale-price .sr-only');
         const finalPrice = pdpFinalPrice ? Number(pdpFinalPrice.innerText.replace(/(cents|\s|$|,)/g, '').replace(/and/g, '.').slice(1)).toFixed(2) : 'Price Hidden';
-       
+        
         //Get List Price
         const pdpListPrice = parsedSku.querySelector('.pdp-info .list-price .sr-only');
         const listPrice = pdpListPrice ? Number(pdpListPrice.innerText.replace(/(cents|\s|,)/g, '').replace(/and/g, '.').slice(1)).toFixed(2) : '';
+        
+        //check if has image
+        const withImg = parsedSku.querySelector('.pdp .container .pdp-img .item[data-hash="img1"] img').src;
+
         const errorSKU = parsedSku.querySelector('.error-message.text-center');
         return errorSKU ? 'Product Not Found' : {
             condition: parsedSku.querySelector('.pdp-info .pdp-sku > img') ? 'Refurb' : 'New',
@@ -288,7 +298,8 @@ const QASku = async(edp) => {
             rating: parsedSku.querySelector('.pdp-info .with-review .score') ? parsedSku.querySelector('.pdp-info .with-review .score').innerText : 'No Reviews',
             shipping: parsedSku.querySelector('.pdp-info').innerText.match(/Free Shipping Today!/) ? 'FREE SHIPPING' : 'NOT FREE',
             priceInfo: finalPrice,
-            LPInfo: listPrice
+            LPInfo: listPrice,
+            withImg: withImg.indexOf('no_image-med') > -1 ? 'NO' : 'YES'
         }
     } catch(err){
         console.log(err)
