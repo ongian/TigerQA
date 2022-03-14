@@ -285,8 +285,9 @@ const QASku = async(edp) => {
         const listPrice = pdpListPrice ? Number(pdpListPrice.innerText.replace(/(cents|\s|,)/g, '').replace(/and/g, '.').slice(1)).toFixed(2) : '';
         
         //check if has image
-        const withImg = parsedSku.querySelector('.pdp .container .pdp-img .item[data-hash="img1"] img').src;
-
+        const imagesrc = parsedSku.querySelector('.pdp .container .pdp-img .item[data-hash="img1"] img').src;
+        const fetchImg = await fetch(`https://stark-brushlands-36367.herokuapp.com/${imagesrc}`);
+        const withImg = fetchImg.status === 404 ? 'NO' : 'YES';
         const errorSKU = parsedSku.querySelector('.error-message.text-center');
         return errorSKU ? 'Product Not Found' : {
             condition: parsedSku.querySelector('.pdp-info .pdp-sku > img') ? 'Refurb' : 'New',
@@ -299,7 +300,7 @@ const QASku = async(edp) => {
             shipping: parsedSku.querySelector('.pdp-info').innerText.match(/Free Shipping Today!/) ? 'FREE SHIPPING' : 'NOT FREE',
             priceInfo: finalPrice,
             LPInfo: listPrice,
-            withImg: withImg.indexOf('no_image-med') > -1 ? 'NO' : 'YES'
+            withImg: withImg
         }
     } catch(err){
         console.log(err)
