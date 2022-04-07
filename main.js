@@ -5,7 +5,7 @@ const QAPage = async(campaignID) => {
     try{
         let productArray = [];
         let EDPs = [];
-        const response = await fetch(`https://stark-brushlands-36367.herokuapp.com/https://www.tigerdirect.com/applications/campaigns/deals.asp?campaignid=${campaignID}`);
+        const response = await fetch(`https://stark-brushlands-36367.herokuapp.com/https://www.tigerdirect.com/applications/campaigns/deals.asp?campaignid=${campaignID}`, {cache: "no-cache"});
         const responseText = await response.text();
         const parser = new DOMParser();
         const parsedHTML = parser.parseFromString(responseText, 'text/html');
@@ -165,7 +165,7 @@ const QAPage = async(campaignID) => {
 const QAPCGaming = async(campaignID) => {
     try {
         let featuredArr = [];
-        const response = await fetch(`https://stark-brushlands-36367.herokuapp.com/https://www.tigerdirect.com/applications/campaigns/deals.asp?campaignid=${campaignID}`);
+        const response = await fetch(`https://stark-brushlands-36367.herokuapp.com/https://www.tigerdirect.com/applications/campaigns/deals.asp?campaignid=${campaignID}`, {cache: "no-cache"});
         const responseText = await response.text();
         const parser = new DOMParser();
         const parsedHTML = parser.parseFromString(responseText, 'text/html');
@@ -271,7 +271,7 @@ const QAPCGaming = async(campaignID) => {
 //Check Each SKU and returns SKUs Statuses
 const QASku = async(edp) => {
     try {
-        const response = await fetch(`https://stark-brushlands-36367.herokuapp.com/https://www.tigerdirect.com/applications/searchtools/item-Details.asp?EdpNo=${edp}`);
+        const response = await fetch(`https://stark-brushlands-36367.herokuapp.com/https://www.tigerdirect.com/applications/searchtools/item-Details.asp?EdpNo=${edp}`, {cache: "no-cache"});
         const skuResponse = await response.text();
         const parser = new DOMParser();
         const parsedSku = parser.parseFromString(skuResponse, 'text/html');
