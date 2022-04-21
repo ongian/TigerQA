@@ -13,10 +13,10 @@ const QAPage = async(campaignID) => {
         document.querySelector('.qa-results').innerHTML = `<div class="loader"></div>`;
         let progress = '';
         
-        const edpRegex = /"edp"\s:\s"[0-9]+"/g;
-        const automatedEDP = responseText.match(edpRegex);
+        const edpRegex = /"edp"([\s\:]+)(["0-9]+)/gm;
+        const automatedEDP = responseText.match(edpRegex) && responseText.match(edpRegex).map(s => s.split('"')[3]);
         const trimmedEDP = []
-
+        console.log(automatedEDP)
         let dummyFeaturedProduct = [];
         let featuredProductEDP = [];
    
@@ -66,7 +66,7 @@ const QAPage = async(campaignID) => {
         
         if(automatedEDP){
             for(i = 0; i < automatedEDP.length; i++){
-                const EDP = automatedEDP[i].split('"')[3];
+                const EDP = automatedEDP[i];
                 const eachTrimmedEDP = await QASku(EDP);
                 trimmedEDP.push(eachTrimmedEDP);
                 if(automatedEDP.length > eachProduct.length && automatedEDP.length > featuredProductEDP.length){
@@ -172,94 +172,160 @@ const QAPCGaming = async(campaignID) => {
         const eachFeatured = parsedHTML.querySelectorAll('.td-esports .container .featured');
         document.querySelector('.qa-results').innerHTML = `<div class="loader"></div>`;
 
-        const edpRegex = /"edp"\s:\s"[0-9]+"/g;
-        const featuredEDPRegex = /"featured_edp"\s:\s"[0-9]+"/g;
+        const skuRegex = /"edp"([\s\:]+)(["0-9]+)/gm;
+        const featuredEDPRegex = /"featured_edp"([\s\:]+)(["0-9]+)/gm;
 
-        const automatedEDP = responseText.match(edpRegex);
-        const automatedFeaturedEDP = responseText.match(featuredEDPRegex);
+        const automatedEDP = responseText.match(skuRegex).map(s => s.split('"')[3]);
+        const automatedFeaturedEDP = responseText.match(featuredEDPRegex).map(s => s.split('"')[3]);
         const trimmedEDP = [];
         const trimmedFeaturedEDP = [];
+
         if(automatedEDP){
             for(i = 0; i < automatedEDP.length; i++){
-                trimmedEDP.push(automatedEDP[i].split('"')[3])
+                const EDP = automatedEDP[i];
+                const eachTrimmedEDP = await QASku(EDP);
+                trimmedEDP.push(eachTrimmedEDP);
+                document.querySelector('.progress').innerHTML = `<span>Checking ${i} / ${automatedEDP.length}</span>`;
             }
         }
         if(automatedFeaturedEDP){
             for(i = 0; i < automatedFeaturedEDP.length; i++){
-                trimmedFeaturedEDP.push(automatedFeaturedEDP[i].split('"')[3])
+                const EDP = automatedFeaturedEDP[i];
+                const eachTrimmedEDP = await QASku(EDP);
+                trimmedFeaturedEDP.push(eachTrimmedEDP);
             }
         }
-        for(var i = 0; i < eachFeatured.length; i++){
-            document.querySelector('.progress').innerHTML = `<span>Checking Featured Category ${i} / ${eachFeatured.length}</span>`;
-            const category = eachFeatured[i].querySelector('.header h2').innerText;
-            const categoryLink = eachFeatured[i].querySelector('.header .col-3 a');
-            const featuredSkuLink = eachFeatured[i].querySelector('.featured-banner a').href;
-            const featuredLogo = eachFeatured[i].querySelector('.featured-banner .sku > img').src;
-            const skuTitle =  eachFeatured[i].querySelector('.featured-banner .sku .sku-title').innerText;
-            const featuredImg = eachFeatured[i].querySelector('.featured-banner a > img').src;
-            const params = new URLSearchParams(featuredSkuLink.split('?')[1]);
-            const featuredSkuEdpno = params.get('EdpNo');
-            const subFeaturedSku = eachFeatured[i].nextElementSibling.querySelectorAll('.sku > a');
-            const subFeaturedSKUArr = [];
-            for(var ii = 0; ii < subFeaturedSku.length; ii++){
-                const subParams = new URLSearchParams(subFeaturedSku[ii].href.split('?')[1]);
-                const subFeaturedEDP = subParams.get('EdpNo');
-                subFeaturedSKUArr.push({
-                    sub: await QASku(subFeaturedEDP), 
-                    shippingInfo: subFeaturedSku[ii].querySelector('.sku-callout').innerText.match(/FREE SHIPPING/) ? 'FREE SHIPPING' : 'NOT FREE',
-                    subTitle: subFeaturedSku[ii].querySelector('.sku-titlepc').innerText,
-                    subImg: subFeaturedSku[ii].querySelector('.sku-image img').src,
-                    edp: subFeaturedEDP
-                });
-            }
-            featuredArr.push({
-                category: category,
-                categoryLink: categoryLink !== null ? categoryLink.href : null,
-                featuredLogo: featuredLogo,
-                skuTitle: skuTitle,
-                featuredImg: featuredImg,
-                edpno: {
-                    FeaturedSku: await QASku(featuredSkuEdpno), 
-                    shipping: eachFeatured[i].querySelector('.callout').innerText.match(/FREE SHIPPING/) ? 'FREE SHIPPING' : 'NOT FREE'
-                },
-                sub: subFeaturedSKUArr
-            });
+        if(trimmedEDP.length > 0){
+            const tableContent = trimmedEDP.map(skuArr => `<tr>
+                <td> ${skuArr.category}</td>
+                <td><a href="https://www.tigerdirect.com/applications/SearchTools/item-details.asp?EdpNo=${skuArr.edp}" target="_blank">${skuArr.sku}</a></td>
+                <td class="price"><div class="pdp-price">${skuArr.LPInfo && '<del>'+skuArr.LPInfo+'</del>'} ${skuArr.priceInfo == 'No Price' ? 'No Price' : skuArr.priceInfo}</div></td>
+                <td><span class=${skuArr.stock === 'Out of stock' ? 'out-of-stock' : 'in-stock'}>${skuArr.stock}</span></td>
+                <td>${skuArr.condition}</td>
+                <td><span class=${skuArr.skuType === 'YES' ? 'cnet' : ''}>${skuArr.skuType}</span></td>
+                <td><span class=${skuArr.shipping === 'FREE' ? 'free' : ''}>${skuArr.shipping}</span></td>
+                <td><span class=${skuArr.rating === 'No Reviews' ? 'no-review' : (skuArr.rating < 4 ? 'less-4' : 'good')}>${skuArr.rating}</span></td>
+                <td><span class=${skuArr.withImg === 'NO' && 'cnet'}>${skuArr.withImg}</span></td>    
+            </tr>`).join('');
+                document.querySelector('.qa-results').insertAdjacentHTML('afterbegin', `<table class="featured-skus" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                <th>Category</th>
+                <th>SKU #</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Condition</th>
+                <th>CNET</th>
+                <th>Shipping Fee</th>
+                <th>Rating</th>
+                <th>With Image</th>
+            </tr> ${tableContent} </table>`);
         }
-        const tableContent = featuredArr.map(skuArr => 
-            `<tr>
-                <td colspan="7">${skuArr.category}</td>
-            </tr>
-            <tr>
-                <td>${skuArr.edpno.FeaturedSku.category}</td>
-                <td><a href="https://www.tigerdirect.com/applications/SearchTools/item-details.asp?EdpNo=${skuArr.edpno.FeaturedSku.edp}" target="_blank">${skuArr.edpno.FeaturedSku.sku}</a></td>
-                <td><span class=${skuArr.edpno.FeaturedSku.stock === 'Out of stock' ? 'out-of-stock' : 'in-stock'}>${skuArr.edpno.FeaturedSku.stock}</span></td>
-                <td>${skuArr.edpno.FeaturedSku.condition}</td>
-                <td><span class=${skuArr.edpno.FeaturedSku.skuType === 'YES' ? 'cnet' : ''}>${skuArr.edpno.FeaturedSku.skuType}</span></td>
-                <td><span class=${skuArr.edpno.FeaturedSku.shipping !== skuArr.edpno.shipping ? "not-match" : ""}>${skuArr.edpno.shipping === 'FREE SHIPPING' ? 'FREE SHIPPING ' : 'NOT FREE'}  |  ${skuArr.edpno.FeaturedSku.shipping}</span></td>
-                <td><span class=${skuArr.edpno.FeaturedSku.rating === 'No Reviews' ? 'no-review' : (skuArr.edpno.rating < 4 ? 'less-4' : 'good')}>${skuArr.edpno.FeaturedSku.rating}</span></td>
-            </tr>
-            ${skuArr.sub.map(subSKU => `<tr>
-                <td><i class="fas fa-copy" onclick="${getSku.bind(this, subSKU.sub.edp, subSKU.sub.sku, subSKU.sub.category)}"></i> ${subSKU.sub.category}</td>
-                <td><a href="https://www.tigerdirect.com/applications/SearchTools/item-details.asp?EdpNo=${subSKU.sub.edp}" target="_blank">${subSKU.sub.sku}</a></td>
-                <td><span class=${subSKU.sub.stock === 'Out of stock' ? 'out-of-stock' : 'in-stock'}>${subSKU.sub.stock}</span></td>
-                <td>${subSKU.sub.condition}</td>
-                <td><span class=${subSKU.sub.skuType === 'YES' ? 'cnet' : ''}>${subSKU.sub.skuType}</span></td>
-                <td><span class=${subSKU.sub.shipping !== subSKU.shippingInfo ? "not-match" : ""}>${subSKU.shippingInfo === 'FREE SHIPPING' ? 'FREE SHIPPING' : 'NOT FREE'}  |  ${subSKU.sub.shipping}</span></td>
-                <td><span class=${subSKU.sub.rating === 'No Reviews' ? 'no-review' : (subSKU.sub.rating < 4 ? 'less-4' : 'good')}>${subSKU.sub.rating}</span></td>
-            </tr>`).join('') }
-            `).join('');
+
+        if(trimmedFeaturedEDP.length > 0){
+            const tableContent = trimmedFeaturedEDP.map(skuArr => `<tr>
+                <td> ${skuArr.category}</td>
+                <td><a href="https://www.tigerdirect.com/applications/SearchTools/item-details.asp?EdpNo=${skuArr.edp}" target="_blank">${skuArr.sku}</a></td>
+                <td class="price"><div class="pdp-price">${skuArr.LPInfo && '<del>'+skuArr.LPInfo+'</del>'} ${skuArr.priceInfo == 'No Price' ? 'No Price' : skuArr.priceInfo}</div></td>
+                <td><span class=${skuArr.stock === 'Out of stock' ? 'out-of-stock' : 'in-stock'}>${skuArr.stock}</span></td>
+                <td>${skuArr.condition}</td>
+                <td><span class=${skuArr.skuType === 'YES' ? 'cnet' : ''}>${skuArr.skuType}</span></td>
+                <td><span class=${skuArr.shipping === 'FREE' ? 'free' : ''}>${skuArr.shipping}</span></td>
+                <td><span class=${skuArr.rating === 'No Reviews' ? 'no-review' : (skuArr.rating < 4 ? 'less-4' : 'good')}>${skuArr.rating}</span></td>
+                <td><span class=${skuArr.withImg === 'NO' && 'cnet'}>${skuArr.withImg}</span></td>    
+            </tr>`).join('');
+                document.querySelector('.qa-results').insertAdjacentHTML('afterbegin', `<table class="featured-skus" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                <th>Category</th>
+                <th>SKU #</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Condition</th>
+                <th>CNET</th>
+                <th>Shipping Fee</th>
+                <th>Rating</th>
+                <th>With Image</th>
+            </tr> ${tableContent} </table>`);
+        }
+
+        // if(automatedFeaturedEDP){
+        //     for(i = 0; i < automatedFeaturedEDP.length; i++){
+        //         trimmedFeaturedEDP.push(automatedFeaturedEDP[i].split('"')[3])
+        //     }
+        // }
+        // for(var i = 0; i < eachFeatured.length; i++){
+        //     document.querySelector('.progress').innerHTML = `<span>Checking Featured Category ${i} / ${eachFeatured.length}</span>`;
+        //     const category = eachFeatured[i].querySelector('.header h2').innerText;
+        //     const categoryLink = eachFeatured[i].querySelector('.header .col-3 a');
+        //     const featuredSkuLink = eachFeatured[i].querySelector('.featured-banner a').href;
+        //     const featuredLogo = eachFeatured[i].querySelector('.featured-banner .sku > img').src;
+        //     const skuTitle =  eachFeatured[i].querySelector('.featured-banner .sku .sku-title').innerText;
+        //     const featuredImg = eachFeatured[i].querySelector('.featured-banner a > img').src;
+        //     const params = new URLSearchParams(featuredSkuLink.split('?')[1]);
+        //     const featuredSkuEdpno = params.get('EdpNo');
+        //     const subFeaturedSku = eachFeatured[i].nextElementSibling.querySelectorAll('.sku > a');
+        //     const subFeaturedSKUArr = [];
+        //     for(var ii = 0; ii < subFeaturedSku.length; ii++){
+        //         const subParams = new URLSearchParams(subFeaturedSku[ii].href.split('?')[1]);
+        //         const subFeaturedEDP = subParams.get('EdpNo');
+        //         subFeaturedSKUArr.push({
+        //             sub: await QASku(subFeaturedEDP), 
+        //             shippingInfo: subFeaturedSku[ii].querySelector('.sku-callout').innerText.match(/FREE SHIPPING/) ? 'FREE SHIPPING' : 'NOT FREE',
+        //             subTitle: subFeaturedSku[ii].querySelector('.sku-titlepc').innerText,
+        //             subImg: subFeaturedSku[ii].querySelector('.sku-image img').src,
+        //             edp: subFeaturedEDP
+        //         });
+        //     }
+        //     featuredArr.push({
+        //         category: category,
+        //         categoryLink: categoryLink !== null ? categoryLink.href : null,
+        //         featuredLogo: featuredLogo,
+        //         skuTitle: skuTitle,
+        //         featuredImg: featuredImg,
+        //         edpno: {
+        //             FeaturedSku: await QASku(featuredSkuEdpno), 
+        //             shipping: eachFeatured[i].querySelector('.callout').innerText.match(/FREE SHIPPING/) ? 'FREE SHIPPING' : 'NOT FREE'
+        //         },
+        //         sub: subFeaturedSKUArr
+        //     });
+        // }
+        // const tableContent = featuredArr.map(skuArr => 
+        //     `<tr>
+        //         <td colspan="7">${skuArr.category}</td>
+        //     </tr>
+        //     <tr>
+        //         <td>${skuArr.edpno.FeaturedSku.category}</td>
+        //         <td><a href="https://www.tigerdirect.com/applications/SearchTools/item-details.asp?EdpNo=${skuArr.edpno.FeaturedSku.edp}" target="_blank">${skuArr.edpno.FeaturedSku.sku}</a></td>
+        //         <td><span class=${skuArr.edpno.FeaturedSku.stock === 'Out of stock' ? 'out-of-stock' : 'in-stock'}>${skuArr.edpno.FeaturedSku.stock}</span></td>
+        //         <td>${skuArr.edpno.FeaturedSku.condition}</td>
+        //         <td><span class=${skuArr.edpno.FeaturedSku.skuType === 'YES' ? 'cnet' : ''}>${skuArr.edpno.FeaturedSku.skuType}</span></td>
+        //         <td><span class=${skuArr.edpno.FeaturedSku.shipping !== skuArr.edpno.shipping ? "not-match" : ""}>${skuArr.edpno.shipping === 'FREE SHIPPING' ? 'FREE SHIPPING ' : 'NOT FREE'}  |  ${skuArr.edpno.FeaturedSku.shipping}</span></td>
+        //         <td><span class=${skuArr.edpno.FeaturedSku.rating === 'No Reviews' ? 'no-review' : (skuArr.edpno.rating < 4 ? 'less-4' : 'good')}>${skuArr.edpno.FeaturedSku.rating}</span></td>
+        //     </tr>
+        //     ${skuArr.sub.map(subSKU => `<tr>
+        //         <td><i class="fas fa-copy" onclick="${getSku.bind(this, subSKU.sub.edp, subSKU.sub.sku, subSKU.sub.category)}"></i> ${subSKU.sub.category}</td>
+        //         <td><a href="https://www.tigerdirect.com/applications/SearchTools/item-details.asp?EdpNo=${subSKU.sub.edp}" target="_blank">${subSKU.sub.sku}</a></td>
+        //         <td><span class=${subSKU.sub.stock === 'Out of stock' ? 'out-of-stock' : 'in-stock'}>${subSKU.sub.stock}</span></td>
+        //         <td>${subSKU.sub.condition}</td>
+        //         <td><span class=${subSKU.sub.skuType === 'YES' ? 'cnet' : ''}>${subSKU.sub.skuType}</span></td>
+        //         <td><span class=${subSKU.sub.shipping !== subSKU.shippingInfo ? "not-match" : ""}>${subSKU.shippingInfo === 'FREE SHIPPING' ? 'FREE SHIPPING' : 'NOT FREE'}  |  ${subSKU.sub.shipping}</span></td>
+        //         <td><span class=${subSKU.sub.rating === 'No Reviews' ? 'no-review' : (subSKU.sub.rating < 4 ? 'less-4' : 'good')}>${subSKU.sub.rating}</span></td>
+        //     </tr>`).join('') }
+        //     `).join('');
             
-        document.querySelector('.qa-results').innerHTML = `<table class="product-container-skus" cellpadding="0" cellspacing="0" width="100%">
-        <tr>
-            <th>Category</th>
-            <th>SKU #</th>
-            <th>Stock</th>
-            <th>Condition</th>
-            <th>CNET</th>
-            <th>Shipping Fee</th>
-            <th>Rating</th>
-        </tr> ${tableContent} </table>`;
-        document.querySelector('.qa-results .loader').remove();
+        // document.querySelector('.qa-results').innerHTML = `<table class="product-container-skus" cellpadding="0" cellspacing="0" width="100%">
+        // <tr>
+        //     <th>Category</th>
+        //     <th>SKU #</th>
+        //     <th>Stock</th>
+        //     <th>Condition</th>
+        //     <th>CNET</th>
+        //     <th>Shipping Fee</th>
+        //     <th>Rating</th>
+        // </tr> ${tableContent} </table>`;
+        // document.querySelector('.qa-results .loader').remove();
+
+        document.querySelector('.progress').innerHTML = '';
+        document.querySelectorAll('.qa-results .loader').length > 0 && document.querySelector('.qa-results .loader').remove();
     } catch(error) {
         console.log(error)
     }
